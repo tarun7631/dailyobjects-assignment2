@@ -1,0 +1,255 @@
+
+<html ng-app="dailyObjectsApp">
+<head>
+
+	<meta name="HandheldFriendly" content="True">
+	<meta name="MobileOptimized" content="320">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+	<link href="https://fonts.googleapis.com/css?family=Exo" rel="stylesheet">
+	<link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.6.3/css/font-awesome.min.css" rel="stylesheet">
+	<link rel="stylesheet" href="https://ajax.googleapis.com/ajax/libs/angular_material/1.1.12/angular-material.min.css">
+
+	<style type="text/css">
+		.loading-head {
+			background:url() center no-repeat;
+			display:inline-block;
+			font-size:0;height:100%;
+			position:fixed;
+			top:0;
+			left:0;
+			width:100%;
+			z-index:99!important;
+			background-color: rgba(255,255,255,0.6)
+		}
+		.loading-icon {
+			background:url() center no-repeat;
+			display:inline-block;
+			font-size:0;height:100%;
+			position:fixed;
+			top:0;
+			left:0;
+			width:100%;
+			z-index:999!important;
+		}
+
+		.row {
+			margin: 0 auto;
+			width: 280px;
+			clear: both;
+			text-align: center;
+			font-family: 'Exo';
+		}
+
+		.digit,
+		.dig {
+			float: left;
+			padding: 10px 30px;
+			width: 30px;
+			font-size: 2rem;
+			cursor: pointer;
+		}
+
+		.sub {
+			font-size: 0.8rem;
+			color: grey;
+		}
+
+		.container {
+			background-color: white;
+			width: 320px;
+			padding: 20px;
+			margin: 30px auto;
+			height: 420px;
+			text-align: center;
+			box-shadow: 0 14px 28px rgba(0, 0, 0, 0.25), 0 10px 10px rgba(0, 0, 0, 0.22);
+		}
+
+		#output {
+			font-family: "Exo";
+			font-size: 2rem;
+			height: 60px;
+			font-weight: bold;
+			color: #1976d2;
+		}
+
+		#call {
+			display: inline-block;
+			background-color: #66bb6a;
+			padding: 4px 30px;
+			margin: 10px;
+			color: white;
+			border-radius: 4px;
+			float: left;
+			cursor: pointer;
+		}
+
+		.botrow {
+			margin: 0 auto;
+			width: 280px;
+			clear: both;
+			text-align: center;
+			font-family: 'Exo';
+		}
+
+		.digit:active,
+		.dig:active {
+			background-color: #e6e6e6;
+		}
+
+		#call:hover {
+			background-color: #81c784;
+		}
+
+		.dig {
+			float: left;
+			padding: 10px 20px;
+			margin: 10px;
+			width: 30px;
+			cursor: pointer;
+		}
+
+	</style>
+</head>
+<body ng-controller="mainController" ng-cloak>
+	<!-- <http-request-loader></http-request-loader> -->
+	<div class="container">
+		<div ng-bind="output" id="output" style="overflow: hidden;"></div>
+		<div class="row">
+			<div ng-repeat="num in dialpadNumbers" class="digit" id="{{num.number}}" ng-click="append(num.number)">{{num.number}} 
+				<div class="sub">{{num.alpha}}</div> 
+			</div>
+		</div>
+		<div class="botrow"><i class="fa fa-star-o dig" aria-hidden="true"></i>
+			<div id="call" ><i class="fa fa-phone" ng-click="decodeSuperHero()" aria-hidden="true"></i></div>
+			<i class="fa fa-long-arrow-left dig" aria-hidden="true" ng-click="remove()"></i>
+		</div>
+	</div>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.7.2/angular.min.js"></script>
+
+	<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.4.0/angular-cookies.min.js"></script>
+
+	<script>
+		var dailyObjectsApp = angular.module('dailyObjectsApp', ['ngCookies']);
+		
+		dailyObjectsApp.constant('CONSTANTS', {
+			"DECODE_SUPERHERO"		: "/api/decode_hero_name",
+		});
+
+		dailyObjectsApp.factory('QueryService', [ 
+			'$http', 
+			'$q', 
+			'$rootScope', 
+			'CONSTANTS', function QueryService(
+				$http, 
+				$q, 
+				$rootScope , 
+				CONSTANTS) {
+
+				var service = {
+					query: query
+				};
+
+				return service;
+
+
+				function query(method,headers, url, params, data) {
+
+					var deferred = $q.defer();
+					$http({
+						method: method,
+						url:  url,
+						headers : headers,
+						params: params,
+						data: data
+					}).then(function(data) {
+						if (!data.config) {
+							console.log('Server error occured.');
+						}
+						deferred.resolve(data);
+					}, function(error) {
+						deferred.reject(error);
+					});
+
+					return deferred.promise;
+				}
+
+			}
+			]);
+
+		dailyObjectsApp.directive("httpRequestLoader",["$http",function($http){
+			return{
+				restrict:"E",
+				template:'<div class="loading-head"><div class="loading-icon"></div><div>',
+				link:function(scope,element,attrs){
+					scope.isLoading=function(){
+						return $http.pendingRequests.length>0},
+						scope.$watch(scope.isLoading,function(value){value?element.removeClass("ng-hide"):element.addClass("ng-hide")})
+					}
+				}
+			}
+			]);
+
+		dailyObjectsApp.controller('mainController', function($scope,$sce,QueryService,CONSTANTS,$cookies,$window,$timeout) {
+
+			$scope.dialpadNumbers = [{
+					number  : '1' ,  
+					alpha 	: '' 
+				},{	
+					number  : '2' ,  
+					alpha 	: 'ABC' 
+				},{	
+					number  : '3' ,  
+					alpha 	: 'DEF' 
+				},{	
+					number  : '4' ,  
+					alpha 	: 'GHI' 
+				},{	
+					number  : '5' ,  
+					alpha 	: 'JKL' 
+				},{	
+					number  : '6' ,  
+					alpha 	: 'MNO' 
+				},{	
+					number  : '7' ,  
+					alpha 	: 'PQRS' 
+				},{	
+					number  : '8' ,  
+					alpha 	: 'TUV' 
+				},{
+					number  : '9' ,  
+					alpha 	: 'WXYZ' 
+				},{
+					number  : '*' ,  
+					alpha 	: '' 
+				},{
+					number  : '0' ,  
+					alpha 	: '' 
+				},{
+					number  : ' ' ,  
+					alpha 	: 'space'  
+				}] ;
+
+			$scope.output = "" ;
+
+			$scope.append = function(value){
+				$scope.output = $scope.output + value ;
+			} ;
+
+			$scope.remove = function(){
+				$scope.output = $scope.output.slice(0, -1);
+			}
+
+			$scope.decodeSuperHero = function(){
+				QueryService.query('GET' , {} , CONSTANTS.DECODE_SUPERHERO , {code : $scope.output})
+					.then(function(resp){
+						console.log(resp)
+					})
+					.catch(function(err){
+						console.log(err)
+					})
+			}
+
+		});
+	</script>
+</body>
+</html>
