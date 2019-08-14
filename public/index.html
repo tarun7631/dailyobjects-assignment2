@@ -120,16 +120,26 @@
 			</div>
 		</div>
 		<div class="botrow"><i class="fa fa-star-o dig" aria-hidden="true"></i>
-			<div id="call" ><i class="fa fa-phone" ng-click="decodeSuperHero()" aria-hidden="true"></i></div>
+			<div id="call" ng-click="decodeSuperHero()"><i class="fa fa-phone"  aria-hidden="true"></i></div>
 			<i class="fa fa-long-arrow-left dig" aria-hidden="true" ng-click="remove()"></i>
 		</div>
 	</div>
+	<div class="container" style="height: auto;" ng-if="ans">
+		<div class="row">
+			{{ans[0]}} is comming
+		</div>
+	</div>
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.7.2/angular.min.js"></script>
+	<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.7.6/angular-animate.min.js"></script>
+  	<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.7.6/angular-aria.min.js"></script>
+  	<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.7.6/angular-messages.min.js"></script>
 
+  	<!-- Angular Material Library -->
+  	<script src="https://ajax.googleapis.com/ajax/libs/angular_material/1.1.12/angular-material.min.js"></script>
 	<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.4.0/angular-cookies.min.js"></script>
 
 	<script>
-		var dailyObjectsApp = angular.module('dailyObjectsApp', ['ngCookies']);
+		var dailyObjectsApp = angular.module('dailyObjectsApp', ['ngCookies','ngMaterial']);
 		
 		dailyObjectsApp.constant('CONSTANTS', {
 			"DECODE_SUPERHERO"		: "/api/decode_hero_name",
@@ -189,7 +199,7 @@
 			}
 			]);
 
-		dailyObjectsApp.controller('mainController', function($scope,$sce,QueryService,CONSTANTS,$cookies,$window,$timeout) {
+		dailyObjectsApp.controller('mainController', function($scope,$sce,QueryService,CONSTANTS,$cookies,$window,$timeout,$mdToast) {
 
 			$scope.dialpadNumbers = [{
 					number  : '1' ,  
@@ -242,10 +252,18 @@
 			$scope.decodeSuperHero = function(){
 				QueryService.query('GET' , {} , CONSTANTS.DECODE_SUPERHERO , {code : $scope.output})
 					.then(function(resp){
-						console.log(resp)
+						$scope.ans = resp.data.data ;
+						console.log(resp.data.data)
 					})
 					.catch(function(err){
 						console.log(err)
+						$scope.ans = null ;
+						$mdToast.show(
+					        $mdToast.simple()
+					        .textContent(err.data.msg)
+					        .position('top right')
+					        .hideDelay(3000)
+					    )
 					})
 			}
 
